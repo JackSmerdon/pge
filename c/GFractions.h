@@ -255,10 +255,10 @@ EXTERN void Fractions_getFract (Fractions_Fract f, long unsigned int *w, long un
 EXTERN long double Fractions_getLongReal (Fractions_Fract f);
 
 /*
-   putReal - returns a fraction in the range whole number + x/10000
+   setReal - returns a fraction in the range whole number + x/10000
 */
 
-EXTERN Fractions_Fract Fractions_putReal (double r);
+EXTERN Fractions_Fract Fractions_setReal (double r);
 
 /*
    writeFract - displays fraction, f.

@@ -29,7 +29,7 @@ typedef enum {IncorrectType, IdOutOfBounds, ValueOutOfRange} ExceptionKind;
          The colour object is returned.
 */
 
-EXTERN unsigned int rgb (double r, double g, double b);
+EXTERN unsigned int rgb (double r, double g, double b, double a);
 
 /*
    white - returns the colour, white.
@@ -112,6 +112,7 @@ EXTERN unsigned int poly5 (double x0, double y0, double x1, double y1, double x2
 */
 
 EXTERN unsigned int poly6 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double x5, double y5, unsigned int c);
+EXTERN unsigned int poly10 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double x5, double y5, double x6, double y6, double x7, double y7, double x8, double y8, double x9, double y9, unsigned int c);
 
 /*
    mass - specify the mass of an object and return the, id.
@@ -137,6 +138,18 @@ EXTERN double get_gravity (unsigned int id);
 */
 
 EXTERN void set_gravity (unsigned int id, double g);
+
+/*
+   get_elasticity
+*/
+
+EXTERN double get_elasticity (unsigned int id);
+
+/*
+   set_elasticity
+*/
+
+EXTERN void set_elasticity (unsigned int id, double e);
 
 /*
    fix - fix the object to the world.
@@ -269,9 +282,14 @@ EXTERN double get_xpos (unsigned int id);
 EXTERN double get_ypos (unsigned int id);
 
 /*
-   get_xvel - returns the X velocity of object.
+   move - moves the object
 */
 
+EXTERN void move (unsigned int id, double x, double y);
+
+/*
+   get_xvel - returns the X velocity of object.
+*/
 EXTERN double get_xvel (unsigned int id);
 
 /*
@@ -293,28 +311,28 @@ EXTERN double get_xaccel (unsigned int id);
 EXTERN double get_yaccel (unsigned int id);
 
 /*
-   put_xvel - assigns the X velocity of object.
+   set_xvel - assigns the X velocity of object.
 */
 
-EXTERN void put_xvel (unsigned int id, double r);
+EXTERN void set_xvel (unsigned int id, double r);
 
 /*
-   put_yvel - assigns the Y velocity of object.
+   set_yvel - assigns the Y velocity of object.
 */
 
-EXTERN void put_yvel (unsigned int id, double r);
+EXTERN void set_yvel (unsigned int id, double r);
 
 /*
-   put_xaccel - assigns the X acceleration of object.
+   set_xaccel - assigns the X acceleration of object.
 */
 
-EXTERN void put_xaccel (unsigned int id, double r);
+EXTERN void set_xaccel (unsigned int id, double r);
 
 /*
-   put_yaccel - assigns the Y acceleration of object.
+   set_yaccel - assigns the Y acceleration of object.
 */
 
-EXTERN void put_yaccel (unsigned int id, double r);
+EXTERN void set_yaccel (unsigned int id, double r);
 
 /*
    set_colour - sets colour of object, id, to, c.

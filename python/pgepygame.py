@@ -93,15 +93,15 @@ def initScreen ():
 def registerColour (connection):
     global maxColour, colTOid, idTOcol
 
-    connection, bytes = get(connection, 3)
-    r, g, b = struct.unpack('BBB', bytes)
-    debugf("colour %d, %d, %d\n", r, g, b)
-    if not colTOid.has_key((r, g, b)):
+    connection, bytes = get(connection, 4)
+    r, g, b, a = struct.unpack('BBB', bytes)
+    debugf("colour %d, %d, %d\n", r, g, b, a)
+    if not colTOid.has_key((r, g, b, a)):
         maxColour += 1
-        colTOid[(r, g, b)] = maxColour
-        idTOcol[maxColour] = (r, g, b)
-    debugf("colour id %d\n", colTOid[(r, g, b)])
-    connection.send(struct.pack('<I', colTOid[(r, g, b)]))
+        colTOid[(r, g, b, a)] = maxColour
+        idTOcol[maxColour] = (r, g, b, a)
+    debugf("colour id %d\n", colTOid[(r, g, b, a)])
+    connection.send(struct.pack('<I', colTOid[(r, g, b, a)]))
     return connection
 
 

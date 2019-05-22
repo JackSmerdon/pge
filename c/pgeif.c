@@ -48,7 +48,7 @@ static Indexing_Index listOfDefs;
          The colour object is returned.
 */
 
-unsigned int rgb (double r, double g, double b);
+unsigned int rgb (double r, double g, double b, double a);
 
 /*
    white - returns the colour, white.
@@ -133,6 +133,13 @@ unsigned int poly5 (double x0, double y0, double x1, double y1, double x2, doubl
 unsigned int poly6 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double x5, double y5, unsigned int c);
 
 /*
+   poly10 - place a hexagon in the world at:
+           (x0,y0),(x1,y1),(x2,y2),(x3,y3),(x4,y4),(x5,y5)
+*/
+
+unsigned int poly10 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double x5, double y5, double x6, double y6, double x7, double y7, double x8, double y8, double x9, double y9,unsigned int c);
+
+/*
    mass - specify the mass of an object and return the, id.
 */
 
@@ -156,6 +163,18 @@ double get_gravity (unsigned int id);
 */
 
 void set_gravity (unsigned int id, double g);
+
+/*
+   get_elasticity
+*/
+
+double get_elasticity (unsigned int id);
+
+/*
+   set_elasticity
+*/
+
+void set_elasticity (unsigned int id, double e);
 
 /*
    fix - fix the object to the world.
@@ -283,6 +302,11 @@ unsigned int rm (unsigned int id);
 double get_xpos (unsigned int id);
 
 /*
+   move -
+*/
+void move (unsigned int id, double x, double y);
+
+/*
    get_ypos - returns the first point, y, coordinate of object.
 */
 
@@ -313,28 +337,28 @@ double get_xaccel (unsigned int id);
 double get_yaccel (unsigned int id);
 
 /*
-   put_xvel - assigns the X velocity of object.
+   set_xvel - assigns the X velocity of object.
 */
 
-void put_xvel (unsigned int id, double r);
+void set_xvel (unsigned int id, double r);
 
 /*
-   put_yvel - assigns the Y velocity of object.
+   set_yvel - assigns the Y velocity of object.
 */
 
-void put_yvel (unsigned int id, double r);
+void set_yvel (unsigned int id, double r);
 
 /*
-   put_xaccel - assigns the X accelaration of object.
+   set_xaccel - assigns the X accelaration of object.
 */
 
-void put_xaccel (unsigned int id, double r);
+void set_xaccel (unsigned int id, double r);
 
 /*
-   put_yaccel - assigns the Y accelaration of object.
+   set_yaccel - assigns the Y accelaration of object.
 */
 
-void put_yaccel (unsigned int id, double r);
+void set_yaccel (unsigned int id, double r);
 
 /*
    set_colour - sets colour of object, id, to, c.
@@ -665,16 +689,18 @@ static void * nofree (void * a)
          The colour object is returned.
 */
 
-unsigned int rgb (double r, double g, double b)
+unsigned int rgb (double r, double g, double b, double a)
 {
   Fractions_Fract rf;
   Fractions_Fract gf;
   Fractions_Fract bf;
+  Fractions_Fract af;
 
-  rf = Fractions_putReal (r);
-  gf = Fractions_putReal (g);
-  bf = Fractions_putReal (b);
-  return trace (addDef ((TypeOfDef) colour, deviceIf_defineColour (rf, gf, bf)), (char *) "colour", 6);
+  rf = Fractions_setReal (r);
+  gf = Fractions_setReal (g);
+  bf = Fractions_setReal (b);
+  af = Fractions_setReal (a);
+  return trace (addDef ((TypeOfDef) colour, deviceIf_defineColour (rf, gf, bf, af)), (char *) "colour", 6);
 }
 
 
@@ -861,6 +887,33 @@ unsigned int poly6 (double x0, double y0, double x1, double y1, double x2, doubl
   return trace (addDef ((TypeOfDef) object, twoDsim_poly6 (x0, y0, x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, (deviceIf_Colour) lookupDef ((TypeOfDef) colour, c))), (char *) "poly6", 5);
 }
 
+unsigned int poly10 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double x5, double y5, double x6, double y6, double x7, double y7, double x8, double y8, double x9, double y9, unsigned int c)
+{
+  double k;
+
+  x0 = check_range (x0, (char *) "poly10", 6, (char *) "x0", 2);
+  y0 = check_range (y0, (char *) "poly10", 6, (char *) "y0", 2);
+  x1 = check_range (x1, (char *) "poly10", 6, (char *) "x1", 2);
+  y1 = check_range (y1, (char *) "poly10", 6, (char *) "y1", 2);
+  x2 = check_range (x2, (char *) "poly10", 6, (char *) "x2", 2);
+  y2 = check_range (y2, (char *) "poly10", 6, (char *) "y2", 2);
+  x3 = check_range (x3, (char *) "poly10", 6, (char *) "x3", 2);
+  y3 = check_range (y3, (char *) "poly10", 6, (char *) "y3", 2);
+  x4 = check_range (x4, (char *) "poly10", 6, (char *) "x4", 2);
+  y4 = check_range (y4, (char *) "poly10", 6, (char *) "y4", 2);
+  x5 = check_range (x5, (char *) "poly10", 6, (char *) "x5", 2);
+  y5 = check_range (y5, (char *) "poly10", 6, (char *) "y5", 2);
+  x6 = check_range (x6, (char *) "poly10", 6, (char *) "x6", 2);
+  y6 = check_range (y6, (char *) "poly10", 6, (char *) "y6", 2);
+  x7 = check_range (x7, (char *) "poly10", 6, (char *) "x7", 2);
+  y7 = check_range (y7, (char *) "poly10", 6, (char *) "y7", 2);
+  x8 = check_range (x8, (char *) "poly10", 6, (char *) "x8", 2);
+  y8 = check_range (y8, (char *) "poly10", 6, (char *) "y8", 2);
+  x9 = check_range (x9, (char *) "poly10", 6, (char *) "x9", 2);
+  y9 = check_range (y9, (char *) "poly10", 6, (char *) "y9", 2);
+  return trace (addDef ((TypeOfDef) object, twoDsim_poly10 (x0, y0, x1, y1, x2, y2, x3, y3, x4, y4, x5, y5, x6, y6, x7, y7, x8, y8, x9, y9, (deviceIf_Colour) lookupDef ((TypeOfDef) colour, c))), (char *) "poly10", 6);
+
+}
 
 /*
    mass - specify the mass of an object and return the, id.
@@ -884,17 +937,6 @@ double get_mass (unsigned int id)
   return twoDsim_get_mass (lookupDef ((TypeOfDef) object, id));
 }
 
-
-/*
-   get_gravity - returns the gravity of a circle or polygon object.
-*/
-
-double get_gravity (unsigned int id)
-{
-  return twoDsim_get_gravity (lookupDef ((TypeOfDef) object, id));
-}
-
-
 /*
    set_gravity - sets the per object gravity, g, to a circle or
                  polygon object.
@@ -905,6 +947,32 @@ void set_gravity (unsigned int id, double g)
   twoDsim_set_gravity (lookupDef ((TypeOfDef) object, id), g);
 }
 
+/*
+   get_gravity - returns the gravity of a circle or polygon object.
+*/
+
+double get_gravity (unsigned int id)
+{
+  return twoDsim_get_gravity (lookupDef ((TypeOfDef) object, id));
+}
+
+/*
+   set_elasticity
+*/
+
+void set_elasticity (unsigned int id, double e)
+{
+  twoDsim_set_elasticity (lookupDef ((TypeOfDef) object, id), e);
+}
+
+/*
+   get_elasticity
+*/
+
+double get_elasticity (unsigned int id)
+{
+  return twoDsim_get_elasticity (lookupDef ((TypeOfDef) object, id));
+}
 
 /*
    fix - fix the object to the world.
@@ -1152,6 +1220,15 @@ double get_ypos (unsigned int id)
   return check_range (twoDsim_get_ypos (lookupDef ((TypeOfDef) object, id)), (char *) "get_ypos", 8, (char *) "id", 2);
 }
 
+/*
+   move -
+*/
+
+void move (unsigned int id, double x, double y)
+{
+  twoDsim_move (lookupDef ((TypeOfDef) object, id), x, y);
+}
+
 
 /*
    get_xvel - returns the X velocity of object.
@@ -1194,42 +1271,42 @@ double get_yaccel (unsigned int id)
 
 
 /*
-   put_xvel - assigns the X velocity of object.
+   set_xvel - assigns the X velocity of object.
 */
 
-void put_xvel (unsigned int id, double r)
+void set_xvel (unsigned int id, double r)
 {
-  twoDsim_put_xvel (lookupDef ((TypeOfDef) object, id), r);
+  twoDsim_set_xvel (lookupDef ((TypeOfDef) object, id), r);
 }
 
 
 /*
-   put_yvel - assigns the Y velocity of object.
+   set_yvel - assigns the Y velocity of object.
 */
 
-void put_yvel (unsigned int id, double r)
+void set_yvel (unsigned int id, double r)
 {
-  twoDsim_put_yvel (lookupDef ((TypeOfDef) object, id), r);
+  twoDsim_set_yvel (lookupDef ((TypeOfDef) object, id), r);
 }
 
 
 /*
-   put_xaccel - assigns the X accelaration of object.
+   set_xaccel - assigns the X accelaration of object.
 */
 
-void put_xaccel (unsigned int id, double r)
+void set_xaccel (unsigned int id, double r)
 {
-  twoDsim_put_xaccel (lookupDef ((TypeOfDef) object, id), r);
+  twoDsim_set_xaccel (lookupDef ((TypeOfDef) object, id), r);
 }
 
 
 /*
-   put_yaccel - assigns the Y accelaration of object.
+   set_yaccel - assigns the Y accelaration of object.
 */
 
-void put_yaccel (unsigned int id, double r)
+void set_yaccel (unsigned int id, double r)
 {
-  twoDsim_put_yaccel (lookupDef ((TypeOfDef) object, id), r);
+  twoDsim_set_yaccel (lookupDef ((TypeOfDef) object, id), r);
 }
 
 

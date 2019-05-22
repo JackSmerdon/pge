@@ -57,20 +57,20 @@ void popWorld_rotate (Fractions_Fract r);
 void popWorld_init (unsigned int groff);
 
 /*
-   ppolygon - 
+   ppolygon -
 */
 
 static void ppolygon (unsigned int n, Points_Point *p_, unsigned int _p_high, unsigned int fill, Fractions_Fract thick, deviceIf_Colour c);
 
 /*
-   pcircle - 
+   pcircle -
 */
 
 static void pcircle (Points_Point pos, unsigned int fill, Fractions_Fract thick, Fractions_Fract rad, deviceIf_Colour c);
 
 
 /*
-   ppolygon - 
+   ppolygon -
 */
 
 static void ppolygon (unsigned int n, Points_Point *p_, unsigned int _p_high, unsigned int fill, Fractions_Fract thick, deviceIf_Colour c)
@@ -99,9 +99,12 @@ static void ppolygon (unsigned int n, Points_Point *p_, unsigned int _p_high, un
         o = twoDsim_poly6 (Fractions_getReal (p[0].x), Fractions_getReal (p[0].y), Fractions_getReal (p[1].x), Fractions_getReal (p[1].y), Fractions_getReal (p[2].x), Fractions_getReal (p[2].y), Fractions_getReal (p[3].x), Fractions_getReal (p[3].y), Fractions_getReal (p[4].x), Fractions_getReal (p[4].y), Fractions_getReal (p[5].x), Fractions_getReal (p[5].y), c);
         break;
 
+      case 10:
+        o = twoDsim_poly10 (Fractions_getReal (p[0].x), Fractions_getReal (p[0].y), Fractions_getReal (p[1].x), Fractions_getReal (p[1].y), Fractions_getReal (p[2].x), Fractions_getReal (p[2].y), Fractions_getReal (p[3].x), Fractions_getReal (p[3].y), Fractions_getReal (p[4].x), Fractions_getReal (p[4].y), Fractions_getReal (p[5].x), Fractions_getReal (p[5].y), Fractions_getReal (p[6].x), Fractions_getReal (p[6].y), Fractions_getReal (p[7].x), Fractions_getReal (p[7].y), Fractions_getReal (p[8].x), Fractions_getReal (p[8].y), Fractions_getReal (p[9].x), Fractions_getReal (p[9].y), c);
+        break;
 
       default:
-        libc_printf ((char *) "too many sides to the polygon, max 6 allowed\\n", 46);
+        libc_printf ((char *) "too many sides to the polygon, max 10 allowed\\n", 47);
         M2RTS_HALT (-1);
         break;
     }
@@ -117,7 +120,7 @@ static void ppolygon (unsigned int n, Points_Point *p_, unsigned int _p_high, un
 
 
 /*
-   pcircle - 
+   pcircle -
 */
 
 static void pcircle (Points_Point pos, unsigned int fill, Fractions_Fract thick, Fractions_Fract rad, deviceIf_Colour c)

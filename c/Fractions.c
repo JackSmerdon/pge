@@ -292,10 +292,10 @@ void Fractions_getFract (Fractions_Fract f, long unsigned int *w, long unsigned 
 long double Fractions_getLongReal (Fractions_Fract f);
 
 /*
-   putReal - returns a fraction in the range whole number + x/10000
+   setReal - returns a fraction in the range whole number + x/10000
 */
 
-Fractions_Fract Fractions_putReal (double r);
+Fractions_Fract Fractions_setReal (double r);
 
 /*
    writeFract - displays fraction, f.
@@ -2530,7 +2530,7 @@ Fractions_Fract Fractions_unroot (Fractions_Fract f)
 
 Fractions_Fract Fractions_pi (void)
 {
-  /* 
+  /*
    RETURN initFract(3, 1, 7)
   */
   return makeSpecial (Fractions_initFract (3, 1, 7), (Special) PI);
@@ -3158,10 +3158,10 @@ long double Fractions_getLongReal (Fractions_Fract f)
 
 
 /*
-   putReal - returns a fraction in the range whole number + x/10000
+   setReal - returns a fraction in the range whole number + x/10000
 */
 
-Fractions_Fract Fractions_putReal (double r)
+Fractions_Fract Fractions_setReal (double r)
 {
   unsigned int w;
   unsigned int n;

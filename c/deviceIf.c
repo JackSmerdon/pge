@@ -182,7 +182,7 @@ void deviceIf_writeTime (double t);
                   never freed.
 */
 
-unsigned int deviceIf_defineColour (Fractions_Fract r, Fractions_Fract g, Fractions_Fract b);
+unsigned int deviceIf_defineColour (Fractions_Fract r, Fractions_Fract g, Fractions_Fract b, Fractions_Fract a);
 
 /*
    useGroff - use the groff device to render frames into png images.
@@ -242,7 +242,7 @@ static void checkOpened (void);
    registerColour -
 */
 
-static deviceIf_Colour registerColour (deviceIf_Colour cid, Fractions_Fract r, Fractions_Fract g, Fractions_Fract b);
+static deviceIf_Colour registerColour (deviceIf_Colour cid, Fractions_Fract r, Fractions_Fract g, Fractions_Fract b, Fractions_Fract a);
 
 /*
    writeColour -
@@ -293,7 +293,7 @@ static void checkOpened (void)
    registerColour -
 */
 
-static deviceIf_Colour registerColour (deviceIf_Colour cid, Fractions_Fract r, Fractions_Fract g, Fractions_Fract b)
+static deviceIf_Colour registerColour (deviceIf_Colour cid, Fractions_Fract r, Fractions_Fract g, Fractions_Fract b, Fractions_Fract a)
 {
   if ((((1 << (cid)) & (registered)) != 0))
     {
@@ -314,6 +314,7 @@ static deviceIf_Colour registerColour (deviceIf_Colour cid, Fractions_Fract r, F
       NetworkOrder_writeFract (cfile, r);
       NetworkOrder_writeFract (cfile, g);
       NetworkOrder_writeFract (cfile, b);
+      NetworkOrder_writeFract (cfile, a);
     }
   return cid;
 }
@@ -406,7 +407,7 @@ static void Init (void)
 
 deviceIf_Colour deviceIf_white (void)
 {
-  return registerColour ((deviceIf_Colour) whiteCID, Fractions_one (), Fractions_one (), Fractions_one ());
+  return registerColour ((deviceIf_Colour) whiteCID, Fractions_one (), Fractions_one (), Fractions_one (), Fractions_one ());
 }
 
 
@@ -416,7 +417,7 @@ deviceIf_Colour deviceIf_white (void)
 
 deviceIf_Colour deviceIf_black (void)
 {
-  return registerColour ((deviceIf_Colour) blackCID, Fractions_zero (), Fractions_zero (), Fractions_zero ());
+  return registerColour ((deviceIf_Colour) blackCID, Fractions_zero (), Fractions_zero (), Fractions_zero (), Fractions_one ());
 }
 
 
@@ -426,7 +427,7 @@ deviceIf_Colour deviceIf_black (void)
 
 deviceIf_Colour deviceIf_red (void)
 {
-  return registerColour ((deviceIf_Colour) redCID, Fractions_one (), Fractions_zero (), Fractions_zero ());
+  return registerColour ((deviceIf_Colour) redCID, Fractions_one (), Fractions_zero (), Fractions_zero (), Fractions_one ());
 }
 
 
@@ -436,7 +437,7 @@ deviceIf_Colour deviceIf_red (void)
 
 deviceIf_Colour deviceIf_green (void)
 {
-  return registerColour ((deviceIf_Colour) greenCID, Fractions_zero (), Fractions_one (), Fractions_zero ());
+  return registerColour ((deviceIf_Colour) greenCID, Fractions_zero (), Fractions_one (), Fractions_zero (), Fractions_one ());
 }
 
 
@@ -446,7 +447,7 @@ deviceIf_Colour deviceIf_green (void)
 
 deviceIf_Colour deviceIf_blue (void)
 {
-  return registerColour ((deviceIf_Colour) blueCID, Fractions_zero (), Fractions_zero (), Fractions_one ());
+  return registerColour ((deviceIf_Colour) blueCID, Fractions_zero (), Fractions_zero (), Fractions_one (), Fractions_one ());
 }
 
 
@@ -456,7 +457,7 @@ deviceIf_Colour deviceIf_blue (void)
 
 deviceIf_Colour deviceIf_yellow (void)
 {
-  return registerColour ((deviceIf_Colour) yellowCID, Fractions_one (), Fractions_one (), Fractions_zero ());
+  return registerColour ((deviceIf_Colour) yellowCID, Fractions_one (), Fractions_one (), Fractions_zero (), Fractions_one ());
 }
 
 
@@ -466,7 +467,7 @@ deviceIf_Colour deviceIf_yellow (void)
 
 deviceIf_Colour deviceIf_purple (void)
 {
-  return registerColour ((deviceIf_Colour) purpleCID, Fractions_one (), Fractions_zero (), Fractions_one ());
+  return registerColour ((deviceIf_Colour) purpleCID, Fractions_one (), Fractions_zero (), Fractions_one (), Fractions_one ());
 }
 
 
@@ -620,13 +621,13 @@ void deviceIf_writeTime (double t)
                   never freed.
 */
 
-unsigned int deviceIf_defineColour (Fractions_Fract r, Fractions_Fract g, Fractions_Fract b)
+unsigned int deviceIf_defineColour (Fractions_Fract r, Fractions_Fract g, Fractions_Fract b, Fractions_Fract a)
 {
   unsigned int col;
 
   col = nextColour;
   nextColour += 1;
-  return registerColour ((deviceIf_Colour) col, r, g, b);
+  return registerColour ((deviceIf_Colour) col, r, g, b, a);
 }
 
 

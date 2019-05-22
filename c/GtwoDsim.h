@@ -68,6 +68,9 @@ EXTERN unsigned int twoDsim_poly5 (double x0, double y0, double x1, double y1, d
 
 EXTERN unsigned int twoDsim_poly6 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double x5, double y5, deviceIf_Colour colour);
 
+
+EXTERN unsigned int twoDsim_poly10 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double x5, double y5, double x6, double y6, double x7, double y7, double x8, double y8, double x9, double y9, deviceIf_Colour colour);
+
 /*
    get_xpos - returns the first point, x, coordinate of object.
 */
@@ -80,8 +83,11 @@ EXTERN double twoDsim_get_xpos (unsigned int id);
 
 EXTERN double twoDsim_get_ypos (unsigned int id);
 
+EXTERN void twoDsim_move (unsigned int id, double x, double y);
+
 /*
    get_xvel - returns the x velocity of object.
+
 */
 
 EXTERN double twoDsim_get_xvel (unsigned int id);
@@ -105,29 +111,28 @@ EXTERN double twoDsim_get_xaccel (unsigned int id);
 EXTERN double twoDsim_get_yaccel (unsigned int id);
 
 /*
-   put_xvel - assigns the x velocity of object.
+   set_xvel - assigns the x velocity of object.
 */
 
-EXTERN void twoDsim_put_xvel (unsigned int id, double r);
+EXTERN void twoDsim_set_xvel (unsigned int id, double r);
 
 /*
-   put_yvel - assigns the y velocity of object.
+   set_yvel - assigns the y velocity of object.
 */
 
-EXTERN void twoDsim_put_yvel (unsigned int id, double r);
+EXTERN void twoDsim_set_yvel (unsigned int id, double r);
 
 /*
-   put_xaccel - assigns the x acceleration of object.
+   set_xaccel - assigns the x acceleration of object.
 */
 
-EXTERN void twoDsim_put_xaccel (unsigned int id, double r);
+EXTERN void twoDsim_set_xaccel (unsigned int id, double r);
 
 /*
-   put_yaccel - assigns the y acceleration of object.
+   set_yaccel - assigns the y acceleration of object.
 */
 
-EXTERN void twoDsim_put_yaccel (unsigned int id, double r);
-
+EXTERN void twoDsim_set_yaccel (unsigned int id, double r);
 /*
    apply_impulse - apply an impulse to object, id,
                    along the vector [x, y] with magnitude, m.
@@ -158,6 +163,17 @@ EXTERN void twoDsim_set_colour (unsigned int id, deviceIf_Colour colour);
 */
 
 EXTERN void twoDsim_set_gravity (unsigned int id, double g);
+
+/*
+   set_elasticity -
+*/
+
+EXTERN void twoDsim_set_elasticity(unsigned int id, double e);
+
+/*
+   get_elasticity -
+*/
+EXTERN double twoDsim_get_elasticity (unsigned int id);
 
 /*
    get_gravity - return the gravity of object, id.

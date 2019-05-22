@@ -48,7 +48,7 @@ typedef unsigned int deviceGroff_Colour;
 #   define Header 1
 #   define Margin 1
 #   define MaxName 20
-#   define maxPoints 10
+#   define maxPoints 15
 typedef struct circleDesc_r circleDesc;
 
 typedef struct polygonDesc_r polygonDesc;
@@ -1437,7 +1437,7 @@ static void produceAVI (unsigned int fps, unsigned int width, unsigned int heigh
       debugSystem (s);
       s = DynamicStrings_KillString (s);
     }
-  /* 
+  /*
        s := InitString('rm -f *.pnm *.png f*.ms') ;
        debugSystem(s) ;
        s := KillString(s)
@@ -1631,7 +1631,7 @@ void deviceGroff_glyphCircle (Points_Point pos, unsigned int fill, Fractions_Fra
 
 void deviceGroff_flipBuffer (void)
 {
-  /* 
+  /*
    IF (config^.fps#0) AND (NOT firstFrame)
    THEN
       wait

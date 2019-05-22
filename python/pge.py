@@ -34,6 +34,7 @@ backcanvas = None
 program_name = 'pge'
 version_number = '2.0'
 Black = (0, 0, 0)
+Blue = (0, 0.9, 1)
 framesPerSecond = 100.0
 frame_no = 0
 slow_down_factor = 1.0
@@ -153,6 +154,7 @@ class object:
         self.fixed = False
         self.param = None
         self.kg = None
+        self.elasticity = None
         self.collisionWith = []
         self.collisionp = None
         self.springp = None
@@ -165,6 +167,9 @@ class object:
 
     def _id (self):
         return self.o
+
+    def _get_level(self):
+        return self.level
 
     def _get_3_colour (self):
         global idTOcol
@@ -184,22 +189,31 @@ class object:
         if self.type == fb_box_t:
             if device == pyg_d:
                 c = self.get_colour ()._get_3_colour ()
-                # print c
-                x = (int) (self.o[0] * resolution[0])
-                y = (int) (self.o[1] * resolution[1])
-                w = (int) ((self.o[2] - self.o[0]) * resolution[0])
-                h = (int) ((self.o[5] - self.o[1]) * resolution[1])
-                pygame.draw.rect (screen, c, (x, flip (y), w, h))
+                length = len(self.o)
+                l = []
+                ignore = True
+                for idx in range(length):
+                    if ignore:
+                        ignore = False
+                    elif idx != length-1:
+                        x = self.o[idx-1] * resolution[0]
+                        y = self.o[idx] * resolution[1]
+                        ignore = True
+                        l += [[x, flip (y)]]
+                surface = pygame.Surface((resolution[0],resolution[1]), pygame.SRCALPHA, 32)
+                pygame.draw.polygon (surface, (c[0], c[1], c[2], c[3]), l, 0)
+                screen.blit(surface, (0,0))
             else:
                 self._emit_fill_polygon ()
         elif self.type == fb_circle_t:
             if device == pyg_d:
                 c = self.get_colour ()._get_3_colour ()
-                # print c
                 x = (int) (self.o[0] * resolution[0])
                 y = (int) (self.o[1] * resolution[1])
                 r = (int) (self.o[2] * resolution[0])
-                pygame.draw.circle (screen, c, (x, flip (y)), r, 0)
+                surface = pygame.Surface((resolution[0],resolution[1]), pygame.SRCALPHA, 32)
+                pygame.draw.circle (surface, (c[0], c[1], c[2], c[3]), (x, flip (y)), r, 0)
+                screen.blit(surface, (0,0))
             else:
                 self._emit_fill_circle ()
         elif self.type == colour_t:
@@ -220,7 +234,7 @@ class object:
         _emit_fract (self.o [1])  #  y pos
         _emit_fract (self.o [2])  #  radius
         _emit_short (self.o [3])  #  colour
-        # print "_emit_fill_circle, colour is ", self.o [3], self.o [0], self.o [1], self.o [2]
+        #print "_emit_fill_circle, colour is ", self.o [3], self.o [0], self.o [1], self.o [2]
 
     def _emit_fill_polygon (self):
         output.write (struct.pack ("3s", "dP"))
@@ -271,6 +285,15 @@ class object:
         self.o = self._check_same (pgeif.accel (self.o, ax, ay))
         return self
 
+#
+#  rotate - Pre-condition:  a circle or polygon object
+#          which is not fixed and exists at level 0.
+#          Post-condition:  assign the rotation (angle)
+#          to this object.
+#
+    def rotate (self, angle):
+        pgeif.rotate (self.o, angle)
+
     #
     #  fix - Pre-condition:  the object is either a circle or polygon
     #        which exists in level 0.
@@ -284,7 +307,7 @@ class object:
         self.fixed = True
         self.o = self._check_same (pgeif.fix (self.o))
         # print "fix", self.o
-        # print "returning from fix"
+        #print "returning from fix"
         return self
 
     #
@@ -297,7 +320,7 @@ class object:
         self._check_not_deleted (" a fixed position")
         self.fixed = False
         self.o = self._check_same (pgeif.unfix (self.o))
-        print "returning from unfix"
+        #print "returning from unfix"
         return self
 
     #
@@ -329,6 +352,32 @@ class object:
         self.o = self._check_same (pgeif.mass (self.o, m))
         # print "mass", self.o
         return self
+
+    #
+    #  gravity - Pre-condition:  the object is either a circle or polygon
+    #            which exists in level 0.  The object must not be fixed.
+    #            Post-condition:  object is given gravity, g.
+    #
+    def set_gravity (self, g):
+        self.gravity = g
+        pgeif.set_gravity (self.o, g)
+        return self
+
+    def get_gravity (self):
+        return self.gravity
+
+    #
+    #  Elasticity -
+    #
+    #
+    #
+    def set_elasticity (self, e):
+        self.elasticity = e
+        pgeif.set_elasticity (self.o, e)
+        return self
+
+    def get_elasticity (self):
+        return self.elasticity
 
     #
     #  apply_impulse - Pre-condition:  the object is either a circle or polygon
@@ -493,6 +542,7 @@ class object:
     #  set_colour - Pre-condition:  self is a polygon or circle object.
     #               Post-condition:  this object will be displayed in colour, c.
     #
+
     def set_colour (self, c):
         self._check_type ([box_t, circle_t, fb_box_t, fb_circle_t], "set_colour")
         c._param_colour ("first parameter to set_colour is expected to be a colour")
@@ -522,6 +572,10 @@ class object:
     def get_xpos (self):
         self._check_type ([box_t, circle_t], "get the xpos")
         return pgeif.get_xpos (self.o)
+
+    def move (self, x, y):
+        self._check_type ([box_t, circle_t], "move")
+        pgeif.move (self.o, x, y)
 
     #
     #  get_ypos - Pre-condition:  object must be a circle or polygon.
@@ -565,41 +619,41 @@ class object:
         return pgeif.get_yaccel (self.o)
 
     #
-    #  put_xvel - Pre-condition:  object must be a circle or polygon.
+    #  set_xvel - Pre-condition:  object must be a circle or polygon.
     #             Post-condition:  assigns a float, f, as the x velocity of this
     #             object.
     #
-    def put_xvel (self, f):
-        # print "put_xvel on a", self._name ()
-        self._check_type ([box_t, circle_t], "put the xvel")
-        return pgeif.put_xvel (self.o, f)
+    def set_xvel (self, f):
+        # print "set_xvel on a", self._name ()
+        self._check_type ([box_t, circle_t], "set the xvel")
+        return pgeif.set_xvel (self.o, f)
 
     #
-    #  put_yvel - Pre-condition:  object must be a circle or polygon.
+    #  set_yvel - Pre-condition:  object must be a circle or polygon.
     #             Post-condition:  assigns a float, f, as the y velocity of this
     #             object.
     #
-    def put_yvel (self, f):
-        self._check_type ([box_t, circle_t], "put the yvel")
-        return pgeif.put_yvel (self.o, f)
+    def set_yvel (self, f):
+        self._check_type ([box_t, circle_t], "set the yvel")
+        return pgeif.set_yvel (self.o, f)
 
     #
-    #  put_xaccel - Pre-condition:  object must be a circle or polygon.
+    #  set_xaccel - Pre-condition:  object must be a circle or polygon.
     #               Post-condition:  assigns a float, f, as the x
     #               acceleration of this object.
     #
-    def put_xaccel (self, f):
-        self._check_type ([box_t, circle_t], "put the xaccel")
-        return pgeif.put_xaccel (self.o, f)
+    def set_xaccel (self, f):
+        self._check_type ([box_t, circle_t], "set the xaccel")
+        return pgeif.set_xaccel (self.o, f)
 
     #
-    #  put_xaccel - Pre-condition:  object must be a circle or polygon.
+    #  set_xaccel - Pre-condition:  object must be a circle or polygon.
     #               Post-condition:  assigns a float, f, as the y
     #               acceleration of this object.
     #
-    def put_yaccel (self, f):
-        self._check_type ([box_t, circle_t], "put the yaccel")
-        return pgeif.put_yaccel (self.o, f)
+    def set_yaccel (self, f):
+        self._check_type ([box_t, circle_t], "set the yaccel")
+        return pgeif.set_yaccel (self.o, f)
 
     #
     #  moving_towards - Pre-condition:  object must be a non fixed
@@ -623,7 +677,7 @@ class object:
         self._check_not_deleted ("spring no longer exists")
         self._check_type ([spring_t], "expected a spring")
         c._param_colour ("the first parameter to draw is expected to be a colour")
-        print self.o, c._get_pgeif_colour (), w
+        #print self.o, c._get_pgeif_colour (), w
         pgeif.draw_spring (self.o, c._get_pgeif_colour (), w)
         return self
 
@@ -635,9 +689,9 @@ class object:
         self._check_not_deleted ("spring no longer exists")
         self._check_type ([spring_t], "expected a spring")
         c._param_colour ("the parameter to end is expected to be a colour")
-        print self.o, c._get_pgeif_colour ()
+        #print self.o, c._get_pgeif_colour ()
         pgeif.end_spring (self.o, c._get_pgeif_colour ())
-        print "assigned c", c._get_pgeif_colour ()
+        #print "assigned c", c._get_pgeif_colour ()
         return self
 
     #
@@ -648,9 +702,9 @@ class object:
         self._check_not_deleted ("spring no longer exists")
         self._check_type ([spring_t], "expected a spring")
         c._param_colour ("the parameter to mid is expected to be a colour")
-        print self.o, c._get_pgeif_colour ()
+        #print self.o, c._get_pgeif_colour ()
         pgeif.mid_spring (self.o, c._get_pgeif_colour ())
-        print "assigned c", c._get_pgeif_colour ()
+        #print "assigned c", c._get_pgeif_colour ()
         return self
 
     #
@@ -684,16 +738,16 @@ def _colspace (f):
 #        The r, g, b, values must between 0.0 and 1.0.
 #
 
-def rgb (r, g, b):
+def rgb (r, g, b, a):
     global idTOcol
 
-    # print "in rgb (", r, g, b, ")"
-    c = pgeif.rgb (float(r), float(g), float(b))
-    # print "after pgeif.rgb ->", c
-    o = object (colour_t, [float(r), float(g), float(b), c])
+    #print "in rgb (", r, g, b, a, ")"
+    c = pgeif.rgb (float(r), float(g), float(b), float(a))
+    #print "after pgeif.rgb ->", c
+    o = object (colour_t, [float(r), float(g), float(b), float(a), c])
     o._check_colour ()
     c = pgeif.h2l (c)
-    idTOcol[c] = (_colspace (r), _colspace (g), _colspace (b))
+    idTOcol[c] = (_colspace (r), _colspace (g), _colspace (b), _colspace (a))
     # print "define colour triple as:", idTOcol[c]
     return o
 
@@ -704,9 +758,9 @@ def rgb (r, g, b):
 
 def white ():
     c = pgeif.white ()
-    o = object (colour_t, [1.0, 1.0, 1.0, c])
+    o = object (colour_t, [1.0, 1.0, 1.0, 1.0, c])
     c = pgeif.h2l (c)
-    idTOcol[c] = (255, 255, 255)
+    idTOcol[c] = (255, 255, 255, 255)
     return o
 
 #
@@ -764,7 +818,6 @@ def box (x, y, w, h, c, level = 0):
         _add (ob, level)
     return ob
 
-
 #
 #  poly3 - create a triangle at position, [x0, y0], [x1, y1], [x2, y2] all
 #          values have the range 0.0 to 1.0.
@@ -810,6 +863,85 @@ def poly4 (x0, y0, x1, y1, x2, y2, x3, y3, c, level = 0):
         _add (ob, level)
     return ob
 
+
+def stairs (x, y, height, width, c, level=0):
+    c._param_colour ("seventh parameter to box is expected to be a colour")
+    if level == 0:
+        id = pgeif.poly6 (  x, y,
+                            x + (width/2), y,
+                            x + (width/2), y - (height/2),
+                            x - (width/2), y - (height/2),
+                            x - (width/2), y + (height/2),
+                            x, y + (height/2),
+                            c._get_pgeif_colour ())
+        ob = object (box_t, id, c, level)
+        _register (id, ob)
+    else:
+        ob = object (fb_box_t, [x, y,
+                                x + (width/2), y,
+                                x + (width/2), y - (height/2),
+                                x - (width/2), y - (height/2),
+                                x - (width/2), y + (height/2),
+                                x, y + (height/2),
+                                c._get_pgeif_colour ()], c, level)
+        _add (ob, level)
+    return ob
+
+def hexagon (x, y, height, width, c, level=0):
+    c._param_colour ("seventh parameter to box is expected to be a colour")
+    if level == 0:
+        id = pgeif.poly6 (  x + (width/2), y,
+                            x + (width/4), y - (height/2),
+                            x - (width/4), y - (height/2),
+                            x - (width/2), y,
+                            x - (width/4), y + (height/2),
+                            x + (width/4), y + (height/2),
+                            c._get_pgeif_colour ())
+        ob = object (box_t, id, c, level)
+        _register (id, ob)
+    else:
+        ob = object (fb_box_t, [x + (width/2), y,
+                                x + (width/4), y - (height/2),
+                                x - (width/4), y - (height/2),
+                                x - (width/2), y,
+                                x - (width/4), y + (height/2),
+                                x + (width/4), y + (height/2),
+                                c._get_pgeif_colour ()], c, level)
+        _add (ob, level)
+    return ob
+
+def table (x, y, height, width, c, level = 0):
+    c._param_colour ("seventh parameter to box is expected to be a colour")
+    if level == 0:
+        id = pgeif.poly10 ( x,                  y,
+                            x,                  y + (height * 0.8),
+                            x + (width * 0.1),  y + height,
+                            x + (width * 0.9),  y + height,
+                            x + width,          y + (height * 0.8),
+                            x + width,          y,
+                            x + (width * 0.9),  y,
+                            x + (width * 0.9),  y + (height * 0.8),
+                            x + (width * 0.1),  y + (height * 0.8),
+                            x + (width * 0.1),  y,
+                            c._get_pgeif_colour ())
+
+        ob = object (box_t, id, c, level)
+        _register (id, ob)
+
+    else:
+        ob = object (fb_box_t, [x,                  y,
+                                x,                  y + (height * 0.8),
+                                x + (width * 0.1),  y + height,
+                                x + (width * 0.9),  y + height,
+                                x + width,          y + (height * 0.8),
+                                x + width,          y,
+                                x + (width * 0.9),  y,
+                                x + (width * 0.9),  y + (height * 0.8),
+                                x + (width * 0.1),  y + (height * 0.8),
+                                x + (width * 0.1),  y,
+                                c._get_pgeif_colour ()], c, level)
+        _add (ob, level)
+    return ob
 
 #
 #  _add - adds an object at foreground/background, level.
@@ -881,9 +1013,9 @@ def spring (ob1, ob2, k, d, l = None):
     ob2._check_type ([box_t, circle_t], "creating a spring, second parameter")
     if l == None:
         l = -1
-    print "before pgeif.spring"
+    #print "before pgeif.spring"
     id = pgeif.spring (ob1.o, ob2.o, k, d, l)
-    print "after pgeif.spring =", id
+    #print "after pgeif.spring =", id
     ob = object (spring_t, id, None, 0)
     _register (id, ob)
     return ob
@@ -901,13 +1033,9 @@ def circle (x, y, r, c, level = 0):
     c._param_colour ("fourth parameter to box is expected to be a colour")
     if level == 0:
         id = pgeif.circle (x, y, r, c._get_pgeif_colour ())
-        # print "circle id =", id
-        # _debugf ("circle ")
         ob = object (circle_t, id, c, level)
         _register (id, ob)
     else:
-        # print "circle, colour =", c
-        # print "pge: colour", c._get_pgeif_colour ()
         ob = object (fb_circle_t, [x, y, r, c._get_pgeif_colour ()], c, level)
         _add (ob, level)
     return ob
@@ -1125,6 +1253,7 @@ class event:
         _debugf ("id0 = %d, id1 = %d\n", self.__between[0], self.__between[1])
         ob1 = id2ob[self.__between[0]]
         ob2 = id2ob[self.__between[1]]
+
         return [ob1, ob2]
     def _get_time (self):
         return self.__etime
@@ -1539,7 +1668,7 @@ def _init_screen ():
         pygame.display.set_caption (program_name + ' ' + version_number)
         backcanvas = pygame.Surface (screen.get_size ())
         backcanvas = backcanvas.convert ()
-        backcanvas.fill (Black)
+        screen.fill (Blue)
 
 
 #
@@ -1647,7 +1776,6 @@ def runbatch (t):
 
 def display_set_mode (r):
     global resolution
-    r[1] = r[0]
     resolution = r
 
 #
@@ -1903,12 +2031,14 @@ def _doRegisterColour (f):
     f, rf = _readFract (f)
     f, gf = _readFract (f)
     f, bf = _readFract (f)
+    f, af = _readFract (f)
     if debugging:
         print rf, gf, bf
     r = _toCol (rf)
     g = _toCol (gf)
     b = _toCol (bf)
-    idTOcol[c] = (r, g, b)
+    a = _toCol (af)
+    idTOcol[c] = (r, g, b, a)
     return f
 
 def _doExit (f):
@@ -1954,11 +2084,15 @@ def _doDrawFillPolygon (f):
         x = _mults (resolution[0], xf)
         y = _mults (resolution[1], yf)
         l += [[x, flip (y)]]
+        #print l[i]
 
     f, c = _readColour (f)
     if debugging:
         print "drawFillPolygon (colour =", c, " l =", l, ")"
-    pygame.draw.polygon (screen, c, l, 0)
+
+    surface = pygame.Surface((resolution[0],resolution[1]), pygame.SRCALPHA, 32)
+    pygame.draw.polygon (surface, (c[0], c[1], c[2], c[3]), l, 0)
+    screen.blit(surface, (0,0))
     return f
 
 
@@ -1987,9 +2121,17 @@ def _doDrawFillCircle (f):
 
     f, c = _readColour (f)
     _debugf("circle  x = %d  y = %d,  r = %d\n", x, y, r)
-    if debugging:
-        print "  colour =", c
-    pygame.draw.circle (screen, c, (x, flip (y)), r, 0)
+    #if debugging:
+
+    #Where the circle is supposed to be
+    #pygame.draw.circle (screen, (255,255,255), (x, flip (y)), r, 0)
+
+    surface = pygame.Surface((resolution[0],resolution[1]), pygame.SRCALPHA, 32)
+    pygame.draw.circle (surface, (c[0], c[1], c[2], c[3]), (x, flip (y)), r, 0)
+    screen.blit(surface, (0,0))
+
+    #print "Surface height : ", surface.get_height()
+    #print "Resolution: ", resolution[0]
     return f
 
 
@@ -2114,7 +2256,6 @@ def normalise (v):
     return [x/l, y/l]
 
 
-#
 #  magnitude - return the modulus or magnitude of a vector or
 #              the Pythagorean value of the vector.
 #
@@ -2128,3 +2269,16 @@ def magnitude (v):
 
 def sub_coord (a, b):
     return [a[0]-b[0], a[1]-b[1]]
+
+def key_pressed(key):
+    keys = pygame.key.get_pressed()
+    if key == "Space":
+        if keys[pygame.K_SPACE]:
+            return True
+    elif key == "LeftArrow":
+        if keys[pygame.K_LEFT]:
+            return True
+    elif key == "RightArrow":
+        if keys[pygame.K_RIGHT]:
+            return True
+    return False

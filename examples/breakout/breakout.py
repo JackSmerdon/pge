@@ -67,8 +67,8 @@ def push_it (o, e):
     if p != None and p != []:
         for i in p:
             if i != o:
-                i.put_xvel (i.get_xvel () * 1.15)
-                i.put_yvel (i.get_yvel () * 1.15)
+                i.set_xvel (i.get_xvel () * 1.15)
+                i.set_yvel (i.get_yvel () * 1.15)
 
 
 def placeTriangle (p0, p1, p2, colour):
@@ -98,13 +98,13 @@ def mouse_hit (e):
     mouse = pge.pyg_to_unit_coord (e.pos)
     if e.button == 1:
         if mouse[0] > gb.get_xpos ():
-            gb.put_xvel (gb.get_xvel ()-0.3)
+            gb.set_xvel (gb.get_xvel ()-0.3)
         elif mouse[0] < gb.get_xpos ():
-            gb.put_xvel (gb.get_xvel ()+0.3)
+            gb.set_xvel (gb.get_xvel ()+0.3)
         if mouse[1] > gb.get_ypos ():
-            gb.put_yvel (gb.get_yvel ()-0.3)
+            gb.set_yvel (gb.get_yvel ()-0.3)
         elif mouse[1] < gb.get_ypos ():
-            gb.put_yvel (gb.get_yvel ()+0.3)
+            gb.set_yvel (gb.get_yvel ()+0.3)
 
 
 def place_boxes ():
@@ -134,7 +134,7 @@ def out_of_time ():
 def main ():
     global gb, winner, loser, seconds_left
 
-    b1, b2, b3, b4 = placeBoarders (boarder, wood_dark)
+    b1, b2, b3, b4 = placeBoarders (boarder,  wood_dark)
     place_boxes ()
     t1 = placeTriangle ([0.2, 0.4], [0.4, 0.4], [0.3, 0.5], white)
     t2 = placeTriangle ([0.6, 0.4], [0.8, 0.4], [0.7, 0.5], white)

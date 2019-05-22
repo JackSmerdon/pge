@@ -47,7 +47,7 @@
 #   include "Ggdbif.h"
 #   include "GM2RTS.h"
 
-#   define MaxPolygonPoints 6
+#   define MaxPolygonPoints 10
 #   define DefaultFramesPerSecond 100.0
 #   define Debugging FALSE
 #   define DebugTrace FALSE
@@ -216,6 +216,7 @@ struct _T2_r {
                unsigned int fixed;
                unsigned int stationary;
                double gravity;
+               double elasticity;
                coord_Coord saccel;
                coord_Coord forceVec;
                double vx;
@@ -310,6 +311,8 @@ unsigned int twoDsim_poly5 (double x0, double y0, double x1, double y1, double x
 
 unsigned int twoDsim_poly6 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double x5, double y5, deviceIf_Colour colour);
 
+unsigned int twoDsim_poly10 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double x5, double y5, double x6, double y6, double x7, double y7, double x8, double y8, double x9, double y9, deviceIf_Colour colour);
+
 /*
    get_xpos - returns the x coordinate of the center of gravity of object, id.
 */
@@ -347,28 +350,28 @@ double twoDsim_get_xaccel (unsigned int id);
 double twoDsim_get_yaccel (unsigned int id);
 
 /*
-   put_xvel - assigns the x velocity of object.
+   set_xvel - assigns the x velocity of object.
 */
 
-void twoDsim_put_xvel (unsigned int id, double r);
+void twoDsim_set_xvel (unsigned int id, double r);
 
 /*
-   put_yvel - assigns the y velocity of object.
+   set_yvel - assigns the y velocity of object.
 */
 
-void twoDsim_put_yvel (unsigned int id, double r);
+void twoDsim_set_yvel (unsigned int id, double r);
 
 /*
-   put_xaccel - assigns the x acceleration of object.
+   set_xaccel - assigns the x acceleration of object.
 */
 
-void twoDsim_put_xaccel (unsigned int id, double r);
+void twoDsim_set_xaccel (unsigned int id, double r);
 
 /*
-   put_yaccel - assigns the y acceleration of object.
+   set_yaccel - assigns the y acceleration of object.
 */
 
-void twoDsim_put_yaccel (unsigned int id, double r);
+void twoDsim_set_yaccel (unsigned int id, double r);
 
 /*
    apply_impulse - apply an impulse to object, id,
@@ -393,6 +396,12 @@ unsigned int twoDsim_moving_towards (unsigned int id, double x, double y);
 */
 
 void twoDsim_set_colour (unsigned int id, deviceIf_Colour colour);
+
+/*
+   set_elasticity -
+*/
+
+void twoDsim_set_elasticity(unsigned int id, double e);
 
 /*
    set_gravity - set the gravity of object, id, to, g.
@@ -1323,7 +1332,7 @@ static void inElasticSpring (double *v);
    inElastic -
 */
 
-static void inElastic (double *v);
+static void inElastic (double *v, double elasticity);
 
 /*
    nearZeroVelocity - returns TRUE if, r, is close to 0.0
@@ -2485,7 +2494,7 @@ static void Assert (unsigned int b, unsigned int line)
 {
   if (! b)
     libc_printf ((char *) "twoDsim.mod:%d:error assert failed\\n", 36, line);
-  /* 
+  /*
       exit (1);
       HALT
   */
@@ -2602,8 +2611,8 @@ static void dumpPolygon (Object o)
 
 static void checkDeleted (Object o)
 {
-  if (o->deleted)
-    libc_printf ((char *) "object %d has been deleted, should not be accessing it now\\n", 60, o->id);
+  //if (o->deleted)
+  //  libc_printf ((char *) "object %d has been deleted, should not be accessing it now\\n", 60, o->id);
 }
 
 
@@ -2678,7 +2687,7 @@ static double safeCoord (double r)
 
 static Points_Point c2p (coord_Coord c)
 {
-  return Points_initPoint (Fractions_putReal (safeCoord (c.x)), Fractions_putReal (safeCoord (c.y)));
+  return Points_initPoint (Fractions_setReal (safeCoord (c.x)), Fractions_setReal (safeCoord (c.y)));
 }
 
 
@@ -2792,7 +2801,7 @@ static void apply_impulse_to_circle (Object movable, double x, double y, double 
         impulsePos.y = impulsePos.y+((libm_sin (theta))*movable->c.r);
       }
   c = coord_initCoord (movable->c.pos.x-impulsePos.x, movable->c.pos.y-impulsePos.y);
-  /* 
+  /*
    frameNote ;
    drawFrame (NIL) ;
    debugCircle (impulsePos, 0.02, white ()) ;
@@ -2800,7 +2809,7 @@ static void apply_impulse_to_circle (Object movable, double x, double y, double 
   r = libm_sqrt ((c.x*c.x)+(c.y*c.y));
   unitCollision = coord_initCoord (c.x/r, c.y/r);
   relativeVelocity = coord_initCoord (movable->vx, movable->vy);
-  /* 
+  /*
    debugLine (impulsePos, addCoord (impulsePos, c), yellow ()) ;
    flipBuffer ;
   */
@@ -3004,7 +3013,7 @@ static unsigned int doCheckInterpenCirclePolygon (Object iptr, Object jptr)
             if (roots_nearZero (d))
               {
                 /* avoid dangling else.  */
-                /* 
+                /*
                v := subCoord (jptr^.p.cOfG, p3) ;
 	       d := lengthCoord (v) ;
                v := scaleCoord (v, (r+d)/d) ;
@@ -3015,7 +3024,7 @@ static unsigned int doCheckInterpenCirclePolygon (Object iptr, Object jptr)
               }
             else
               {
-                /* 
+                /*
                printf ("line p1 = %g, %g -> %g, %g and point %g, %g nearest point %g, %g
                 ",
                        p1.x, p1.y, p2.x, p2.y, c.x, c.y, p3.x, p3.y) ;
@@ -3030,23 +3039,23 @@ static unsigned int doCheckInterpenCirclePolygon (Object iptr, Object jptr)
   */
                 v = coord_subCoord (c, p3);
                 v = checkZeroCoord (coord_scaleCoord (v, r/d));
-                /* 
+                /*
                printf ("v = %g, %g   p3 = %g, %g
                 ", v.x, v.y, p3.x, p3.y) ;
   */
                 iptr->c.pos = checkZeroCoord (coord_addCoord (p3, v));
               }
-            /* 
+            /*
                IF iptr^.stationary
                THEN
                   printf ("seen collision between circle and line, new position %g, %g  (now stationary)
             ",
                            iptr^.c.pos.x, iptr^.c.pos.y)
                ELSE
-                  
+
                   iptr^.vx := iptr^.vx - v.x ;
-                  iptr^.vy := iptr^.vy - v.y ;   give it a little push as well.  
-		  
+                  iptr^.vy := iptr^.vy - v.y ;   give it a little push as well.
+
                   printf ("seen collision between circle and line, new position %g, %g, velocity %g, %g  (pushing it by: %g, %g)
             ",
                            iptr^.c.pos.x, iptr^.c.pos.y, iptr^.vx, iptr^.vy, v.x, v.y)
@@ -3487,7 +3496,7 @@ static void checkFrameInterpenPolygonPolygon (Object polygon0, Object polygon1)
                     printQueue ();
                   }
               }
-            /* 
+            /*
                RETURN
   */
           i1 += 1;
@@ -3896,9 +3905,9 @@ static void applyDrag (unsigned int id, coord_Coord a)
     {
       o = Indexing_GetIndice (objects, id);
       if (! (roots_nearZero (a.x)))
-        inElastic (&o->vx);
+        inElastic (&o->vx, o->elasticity);
       if (! (roots_nearZero (a.y)))
-        inElastic (&o->vy);
+        inElastic (&o->vy, o->elasticity);
     }
 }
 
@@ -4198,7 +4207,7 @@ static double calcArea (unsigned int n, coord_Coord *p_, unsigned int _p_high)
 
 static void debugCircle (coord_Coord p, double r, deviceIf_Colour c)
 {
-  deviceIf_glyphCircle (c2p (p), TRUE, Fractions_zero (), Fractions_putReal (r), c);
+  deviceIf_glyphCircle (c2p (p), TRUE, Fractions_zero (), Fractions_setReal (r), c);
 }
 
 
@@ -4235,7 +4244,7 @@ static void debugLine (coord_Coord p1, coord_Coord p2, deviceIf_Colour c)
 
 static void doCircle (coord_Coord p, double r, deviceIf_Colour c)
 {
-  deviceIf_glyphCircle (c2p (p), TRUE, Fractions_zero (), Fractions_putReal (r), c);
+  deviceIf_glyphCircle (c2p (p), TRUE, Fractions_zero (), Fractions_setReal (r), c);
 }
 
 
@@ -5177,9 +5186,9 @@ static void inElasticSpring (double *v)
    inElastic -
 */
 
-static void inElastic (double *v)
+static void inElastic (double *v, double elasticity)
 {
-  (*v) = (*v)*Elasticity;
+  (*v) = (*v)*elasticity;
   checkZero (v);
 }
 
@@ -5207,24 +5216,18 @@ static void checkStationary (Object o)
   if (objectExists (o))
     if (! o->fixed)
       {
-        inElastic (&o->vx);
-        inElastic (&o->vy);
+        inElastic (&o->vx, o->elasticity);
+        inElastic (&o->vy, o->elasticity);
       }
-    /* 
-            stationary := nearZeroVelocity (vx) AND nearZeroVelocity (vy) AND
-                          nearZero (ax) AND nearZero (ay) ;
-            IF stationary
-            THEN
-               
-               vx := 0.0 ;
-               vy := 0.0 ;
-               
-               IF Debugging
-               THEN
-                  dumpObject (o)
-               END
-            END
-  */
+    if (nearZeroVelocity (o->vx) && nearZeroVelocity (o->vy))
+    {
+      o->vx = 0.0;
+      o->vy = 0.0;
+      if (Debugging)
+      {
+        dumpObject(o);
+      }
+    }
 }
 
 
@@ -5945,11 +5948,11 @@ static void doCollision (eventQueue e)
       drawFrame (e);
       deviceIf_flipBuffer ();
     }
-  /* 
+  /*
       collectAll
   */
   physicsCollision (e);
-  /* 
+  /*
    printf ("near end of doCollision
   ");
    printQueue ;
@@ -6200,14 +6203,14 @@ static unsigned int earlierCircleCollision (eventDesc edesc, unsigned int id1, u
   double W;
   double gap;
 
-  /* 
+  /*
    IF (bestTimeOfCollision >= 0.0) AND (t >= 0.0)
    THEN
       gap := 0.5 ;
       T := 1.0 / framesPerSecond ;
       S := sqr ((d - c) * T + 0.5 * (e - f) * sqr (T)) +
-           sqr ((k - l) * T + 0.5 * (m - n) * sqr (T)) ;    estimated distance travelled in next time frame.  
-      W := sqr (a - b) + sqr (g - h) - sqr (o + p) ;   current distance between the two circles.  
+           sqr ((k - l) * T + 0.5 * (m - n) * sqr (T)) ;    estimated distance travelled in next time frame.
+      W := sqr (a - b) + sqr (g - h) - sqr (o + p) ;   current distance between the two circles.
       IF S + gap < W
       THEN
          INC (noOfCulledCollisions) ;
@@ -6279,7 +6282,7 @@ static unsigned int doEarlierCircleCollision (eventDesc edesc, unsigned int id1,
   C = (((((((((((4.0*h)-(4.0*g))*n)+(((4.0*g)-(4.0*h))*m))+(4.0*(sqr (l))))-((8.0*k)*l))+(4.0*(sqr (k))))+(((4.0*b)-(4.0*a))*f))+(((4.0*a)-(4.0*b))*e))+(4.0*(sqr (d))))-((8.0*c)*d))+(4.0*(sqr (c)));
   D = (((((8.0*h)-(8.0*g))*l)+(((8.0*g)-(8.0*h))*k))+(((8.0*b)-(8.0*a))*d))+(((8.0*a)-(8.0*b))*c);
   E = ((((((4.0*(sqr (h)))-((8.0*g)*h))+(4.0*(sqr (g))))+(4.0*(sqr (b))))-((8.0*a)*b))+(4.0*(sqr (a))))-(sqr (2.0*(p+o)));
-  /* 
+  /*
    maximaCircleCollision (array,
                           a, b, c, d, e, f, g, h, k, l, m, n, o, p) ;
   */
@@ -6311,7 +6314,7 @@ static unsigned int doEarlierCircleCollision (eventDesc edesc, unsigned int id1,
           (*cp) = cp2;
           if (roots_nearSame (coord_lengthCoord (v12), o+p))
             {
-              /* 
+              /*
             printf ("
               c1 = %g, %g
               ", c1.x, c1.y) ;
@@ -6450,7 +6453,7 @@ static void findCollisionCircles (Object iptr, Object jptr, eventDesc *edesc, do
   double T;
   coord_Coord cp;
 
-  /* 
+  /*
         a        xi
         g        yi
         o        ri
@@ -6460,7 +6463,7 @@ static void findCollisionCircles (Object iptr, Object jptr, eventDesc *edesc, do
         m        ayi
   */
   getCircleValues (iptr, &a, &g, &o, &c, &k, &e, &m);
-  /* 
+  /*
         b         xj
         h         yj
         p         rj
@@ -6664,7 +6667,7 @@ static void hPoint (coord_Coord p, deviceIf_Colour c)
 {
   p = coord_scaleCoord (p, 0.5);
   p = coord_addCoord (p, coord_initCoord (0.5, 0.5));
-  deviceIf_glyphCircle (c2p (p), TRUE, Fractions_zero (), Fractions_putReal (0.05), c);
+  deviceIf_glyphCircle (c2p (p), TRUE, Fractions_zero (), Fractions_setReal (0.05), c);
 }
 
 
@@ -6676,7 +6679,7 @@ static void hCircle (coord_Coord p, double r, deviceIf_Colour c)
 {
   p = coord_scaleCoord (p, 0.5);
   p = coord_addCoord (p, coord_initCoord (0.5, 0.5));
-  deviceIf_glyphCircle (c2p (p), TRUE, Fractions_zero (), Fractions_putReal (r), c);
+  deviceIf_glyphCircle (c2p (p), TRUE, Fractions_zero (), Fractions_setReal (r), c);
 }
 
 
@@ -6790,7 +6793,7 @@ static unsigned int earlierPointLineCollision (double *timeOfCollision, coord_Co
       hPoint (c1, (deviceIf_Colour) deviceIf_purple ());
       hFlush ();
     }
-  /* 
+  /*
       now solve for, t, when y=0, use S = UT + 1/2 AT^2
       at y = 0 we have:
 
@@ -7922,7 +7925,7 @@ static void calcSpringLengthEvents (unsigned int i)
   t = -1.0;
   getSpringEndValues (id1, &c1, &v1, &a1);
   getSpringEndValues (id2, &c2, &v2, &a2);
-  /* 
+  /*
    test := -1.0 ;
    IF earlierCircleCollision (edesc, i, i,
                               t, ts, cp,
@@ -7941,7 +7944,7 @@ static void calcSpringLengthEvents (unsigned int i)
    id2ptr := GetIndice (objects, id2) ;
    getCircleValues (id1ptr, a, g, o, c, k, e, m) ;
 
-   
+
         b         xj
         h         yj
         p         rj
@@ -7949,7 +7952,7 @@ static void calcSpringLengthEvents (unsigned int i)
         l         vyj
         f         ajx
         n         ajy
-   
+
 
    getCircleValues (id2ptr, b, h, p, d, l, f, n) ;
    o := 0.0 ;
@@ -7968,7 +7971,7 @@ static void calcSpringLengthEvents (unsigned int i)
   */
   if (earlierSpringLength (edesc, i, &t, ts, c1, v1, a1, c2, v2, a2, iptr->s.l0, (history_springPoint) history_midPoint))
     {
-      /* 
+      /*
       printf ("actually found a mid point value of %g
       ", t) ;
       AssertRFail (test, t) ;
@@ -8136,7 +8139,7 @@ static void calcSpringEventTime (unsigned int i)
   calcSpringEndEvents (i);
   if (DebugTrace)
     printQueue ();
-  /* 
+  /*
    calcSpringEndEventsKE (ts, i, edesc) ;
   */
 }
@@ -8269,7 +8272,7 @@ static void doSpringMidPoint (eventQueue e)
       doDrawFrame (id2ptr, 0.0, (deviceIf_Colour) idptr->s.midColour);
       deviceIf_flipBuffer ();
     }
-  /* 
+  /*
    IF NOT id1ptr^.fixed
    THEN
       inElasticSpring (id1ptr^.vx) ;
@@ -8497,7 +8500,7 @@ static void addNextCollisionEvent (void)
   edesc = NULL;
   tc = -1.0;
   list = optPredictiveBroadphase (initBroadphase ());
-  /* 
+  /*
    IF list # NIL
    THEN
       gdbif.sleepSpin
@@ -9380,6 +9383,40 @@ unsigned int twoDsim_poly6 (double x0, double y0, double x1, double y1, double x
   return id;
 }
 
+unsigned int twoDsim_poly10 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double x5, double y5, double x6, double y6, double x7, double y7, double x8, double y8, double x9, double y9, deviceIf_Colour colour)
+{
+  typedef struct _T25_a _T25;
+
+  struct _T25_a { coord_Coord array[9+1]; };
+  unsigned int id;
+  unsigned int i;
+  Object optr;
+  _T25 co;
+
+  /* gdbif_sleepSpin (); */
+  id = newObject ((ObjectType) polygonOb);
+  optr = Indexing_GetIndice (objects, id);
+  co.array[0] = coord_initCoord (x0, y0);
+  co.array[1] = coord_initCoord (x1, y1);
+  co.array[2] = coord_initCoord (x2, y2);
+  co.array[3] = coord_initCoord (x3, y3);
+  co.array[4] = coord_initCoord (x4, y4);
+  co.array[5] = coord_initCoord (x5, y5);
+  co.array[6] = coord_initCoord (x6, y6);
+  co.array[7] = coord_initCoord (x7, y7);
+  co.array[8] = coord_initCoord (x8, y8);
+  co.array[9] = coord_initCoord (x9, y9);
+  optr->p.nPoints = 10;
+  optr->p.cOfG = calculateCofG (optr->p.nPoints, (coord_Coord *) &co.array[0], 9);
+  optr->p.oldcOfG = optr->p.cOfG;
+  for (i=0; i<=optr->p.nPoints-1; i++)
+    optr->p.points.array[i] = polar_coordToPolar (coord_subCoord ((coord_Coord) co.array[i], optr->p.cOfG));
+  optr->p.col = colour;
+  optr->p.mass = 0.0;
+  return id;
+}
+
+
 
 /*
    get_xpos - returns the x coordinate of the center of gravity of object, id.
@@ -9442,6 +9479,34 @@ double twoDsim_get_ypos (unsigned int id)
         M2RTS_HALT (-1);
         break;
     }
+}
+
+void twoDsim_move (unsigned int id, double x, double y)
+{
+  Object optr;
+  down ();
+  optr = Indexing_GetIndice (objects, id);
+  checkDeleted (optr);
+  switch (optr->object)
+    {
+      case polygonOb:
+        optr->p.cOfG.x += x;
+        optr->p.cOfG.y += y;
+        break;
+
+      case circleOb:
+        optr->c.pos.x += x;
+        optr->c.pos.y += y;
+        break;
+
+
+      default:
+        libc_printf ((char *) "get_ypos: only expecting polygon or circle\\n", 44);
+        M2RTS_HALT (-1);
+        break;
+    }
+  checkStationary (optr);
+  up ();
 }
 
 
@@ -9516,10 +9581,10 @@ double twoDsim_get_yaccel (unsigned int id)
 
 
 /*
-   put_xvel - assigns the x velocity of object.
+   set_xvel - assigns the x velocity of object.
 */
 
-void twoDsim_put_xvel (unsigned int id, double r)
+void twoDsim_set_xvel (unsigned int id, double r)
 {
   Object optr;
 
@@ -9533,10 +9598,10 @@ void twoDsim_put_xvel (unsigned int id, double r)
 
 
 /*
-   put_yvel - assigns the y velocity of object.
+   set_yvel - assigns the y velocity of object.
 */
 
-void twoDsim_put_yvel (unsigned int id, double r)
+void twoDsim_set_yvel (unsigned int id, double r)
 {
   Object optr;
 
@@ -9550,10 +9615,10 @@ void twoDsim_put_yvel (unsigned int id, double r)
 
 
 /*
-   put_xaccel - assigns the x acceleration of object.
+   set_xaccel - assigns the x acceleration of object.
 */
 
-void twoDsim_put_xaccel (unsigned int id, double r)
+void twoDsim_set_xaccel (unsigned int id, double r)
 {
   Object optr;
 
@@ -9566,10 +9631,10 @@ void twoDsim_put_xaccel (unsigned int id, double r)
 
 
 /*
-   put_yaccel - assigns the y acceleration of object.
+   set_yaccel - assigns the y acceleration of object.
 */
 
-void twoDsim_put_yaccel (unsigned int id, double r)
+void twoDsim_set_yaccel (unsigned int id, double r)
 {
   Object optr;
 
@@ -9666,6 +9731,54 @@ void twoDsim_set_colour (unsigned int id, deviceIf_Colour colour)
     }
 }
 
+/*
+   set_elasticity -
+*/
+
+void twoDsim_set_elasticity (unsigned int id, double e)
+{
+  Object optr;
+
+  optr = Indexing_GetIndice (objects, id);
+  switch (optr->object)
+    {
+      case polygonOb:
+      case circleOb:
+        optr->elasticity = e;
+        break;
+
+
+      default:
+        libc_printf ((char *) "cannot set the elasticity of this object\\n", 42);
+        break;
+    }
+}
+
+/*
+   get_elasticity -
+*/
+
+double twoDsim_get_elasticity (unsigned int id)
+{
+  Object optr;
+
+  optr = Indexing_GetIndice (objects, id);
+  switch (optr->object)
+    {
+      case polygonOb:
+      case circleOb:
+        return optr->elasticity;
+        break;
+
+
+      default:
+        libc_printf ((char *) "cannot get the elasticity of this object\\n", 42);
+        break;
+    }
+  ReturnException ("../git-pge/m2/twoDsim.def", 2, 1);
+}
+
+
 
 /*
    set_gravity - set the gravity of object, id, to, g.
@@ -9675,7 +9788,6 @@ void twoDsim_set_colour (unsigned int id, deviceIf_Colour colour)
 void twoDsim_set_gravity (unsigned int id, double g)
 {
   Object optr;
-
   optr = Indexing_GetIndice (objects, id);
   switch (optr->object)
     {
@@ -9683,8 +9795,6 @@ void twoDsim_set_gravity (unsigned int id, double g)
       case circleOb:
         optr->gravity = g;
         break;
-
-
       default:
         libc_printf ((char *) "cannot set the gravity of this object\\n", 39);
         break;
@@ -9803,7 +9913,10 @@ unsigned int twoDsim_unfix (unsigned int id)
 {
   Object optr;
 
-  /* your code goes here... 3rd year and mcomp.  */
+  down ();
+  optr = Indexing_GetIndice (objects, id);
+  optr->fixed = FALSE;
+  up ();
   return id;
 }
 
@@ -10012,9 +10125,9 @@ unsigned int twoDsim_rotate (unsigned int id, double angle)
     {
       optr = Indexing_GetIndice (objects, id);
       checkDeleted (optr);
-      if (optr->fixed)
-        libc_printf ((char *) "object %d is fixed and therefore cannot be given an angular velocity\\n", 70, id);
-      else
+      //if (optr->fixed)
+        //libc_printf ((char *) "object %d is fixed and therefore cannot be given an angular velocity\\n", 70, id);
+      //else
         optr->angleOrientation = angle;
     }
   return id;
@@ -10071,7 +10184,7 @@ void twoDsim_simulateFor (double t)
   double s;
   double dt;
 
-  /* 
+  /*
    gdbif.sleepSpin ;
   */
   startedRunning = TRUE;

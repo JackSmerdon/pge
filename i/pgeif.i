@@ -48,12 +48,15 @@ extern "C" unsigned int spring (unsigned int id1, unsigned int id2, double k, do
 extern "C" unsigned int circle (double x0, double y0, double radius, unsigned int c);
 extern "C" unsigned int fix (unsigned int id);
 extern "C" unsigned int unfix (unsigned int id);
-extern "C" unsigned int is_fixed (unsigned int id); 
+extern "C" unsigned int is_fixed (unsigned int id);
 extern "C" unsigned int mass (unsigned int id, double m);
 extern "C" double get_mass (unsigned int id);
 extern "C" double get_gravity (unsigned int id);
 extern "C" double set_gravity (unsigned int id, double g);
+extern "C" double get_elasticity (unsigned int id);
+extern "C" double set_elasticity (unsigned int id, double e);
 
+extern "C" unsigned int poly10 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double x5, double y5, double x6, double y6, double x7, double y7, double x8, double y8, double x9, double y9, unsigned int c);
 extern "C" unsigned int poly6 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double x5, double y5, unsigned int c);
 extern "C" unsigned int poly5 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, unsigned int c);
 extern "C" unsigned int poly4 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, unsigned int c);
@@ -62,6 +65,7 @@ extern "C" unsigned int box (double x0, double y0, double i, double j, unsigned 
 
 extern "C" double get_xpos (unsigned int id);
 extern "C" double get_ypos (unsigned int id);
+extern "C" void move (unsigned int id, double x, double y);
 extern "C" double get_xvel (unsigned int id);
 extern "C" double get_yvel (unsigned int id);
 extern "C" double get_xaccel (unsigned int id);
@@ -69,10 +73,10 @@ extern "C" double get_yaccel (unsigned int id);
 
 extern "C" void apply_impulse (unsigned int id, double x, double y, double m);
 extern "C" int moving_towards (unsigned int id, double x, double y);
-extern "C" void put_xvel (unsigned int id, double d);
-extern "C" void put_yvel (unsigned int id, double d);
-extern "C" void put_xaccel (unsigned int id, double d);
-extern "C" void put_yaccel (unsigned int id, double d);
+extern "C" void set_xvel (unsigned int id, double d);
+extern "C" void set_yvel (unsigned int id, double d);
+extern "C" void set_xaccel (unsigned int id, double d);
+extern "C" void set_yaccel (unsigned int id, double d);
 extern "C" void set_colour (unsigned int id, unsigned int c);
 extern "C" void draw_spring (unsigned int id, unsigned int c, double w);
 extern "C" void end_spring (unsigned int id, unsigned int c);
@@ -87,7 +91,7 @@ extern "C" unsigned int green (void);
 extern "C" unsigned int red (void);
 extern "C" unsigned int black (void);
 extern "C" unsigned int white (void);
-extern "C" unsigned int rgb (double r, double g, double b);
+extern "C" unsigned int rgb (double r, double g, double b, double a);
 
 extern "C" unsigned int l2h (unsigned int id);
 extern "C" unsigned int h2l (unsigned int id);
@@ -123,12 +127,15 @@ extern "C" unsigned int spring (unsigned int id1, unsigned int id2, double k, do
 extern "C" unsigned int circle (double x0, double y0, double radius, unsigned int c);
 extern "C" unsigned int fix (unsigned int id);
 extern "C" unsigned int unfix (unsigned int id);
-extern "C" unsigned int is_fixed (unsigned int id); 
+extern "C" unsigned int is_fixed (unsigned int id);
 extern "C" unsigned int mass (unsigned int id, double m);
 extern "C" double get_mass (unsigned int id);
 extern "C" double get_gravity (unsigned int id);
 extern "C" double set_gravity (unsigned int id, double g);
+extern "C" double get_elasticity (unsigned int id);
+extern "C" double set_elasticity (unsigned int id, double e);
 
+extern "C" unsigned int poly10 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double x5, double y5, double x6, double y6, double x7, double y7, double x8, double y8, double x9, double y9, unsigned int c);
 extern "C" unsigned int poly6 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, double x5, double y5, unsigned int c);
 extern "C" unsigned int poly5 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4, unsigned int c);
 extern "C" unsigned int poly4 (double x0, double y0, double x1, double y1, double x2, double y2, double x3, double y3, unsigned int c);
@@ -137,6 +144,7 @@ extern "C" unsigned int box (double x0, double y0, double i, double j, unsigned 
 
 extern "C" double get_xpos (unsigned int id);
 extern "C" double get_ypos (unsigned int id);
+extern "C" void move (unsigned int id, double x, double x);
 extern "C" double get_xvel (unsigned int id);
 extern "C" double get_yvel (unsigned int id);
 extern "C" double get_xaccel (unsigned int id);
@@ -144,10 +152,10 @@ extern "C" double get_yaccel (unsigned int id);
 
 extern "C" void apply_impulse (unsigned int id, double x, double y, double m);
 extern "C" int moving_towards (unsigned int id, double x, double y);
-extern "C" void put_xvel (unsigned int id, double d);
-extern "C" void put_yvel (unsigned int id, double d);
-extern "C" void put_xaccel (unsigned int id, double d);
-extern "C" void put_yaccel (unsigned int id, double d);
+extern "C" void set_xvel (unsigned int id, double d);
+extern "C" void set_yvel (unsigned int id, double d);
+extern "C" void set_xaccel (unsigned int id, double d);
+extern "C" void set_yaccel (unsigned int id, double d);
 
 extern "C" void set_colour (unsigned int id, unsigned int c);
 extern "C" void draw_spring (unsigned int id, unsigned int c, double w);
@@ -162,7 +170,7 @@ extern "C" unsigned int green (void);
 extern "C" unsigned int red (void);
 extern "C" unsigned int black (void);
 extern "C" unsigned int white (void);
-extern "C" unsigned int rgb (double r, double g, double b);
+extern "C" unsigned int rgb (double r, double g, double b, double a);
 
 extern "C" unsigned int l2h (unsigned int id);
 extern "C" unsigned int h2l (unsigned int id);

@@ -129,7 +129,7 @@ EXTERN void deviceIf_writeTime (double t);
                   never freed.
 */
 
-EXTERN unsigned int deviceIf_defineColour (Fractions_Fract r, Fractions_Fract g, Fractions_Fract b);
+EXTERN unsigned int deviceIf_defineColour (Fractions_Fract r, Fractions_Fract g, Fractions_Fract b, Fractions_Fract a);
 
 /*
    useGroff - use the groff device to render frames into png images.
